@@ -1,0 +1,39 @@
+{% extends 'mots/layout.html' %}
+{% block content %}
+{% load static %}
+
+<img src="{% static 'mots/images/cat.jpg' %}" />
+<div class="mot-list">
+
+{% for mot in mots %}
+    {# Each "mot" is a Mot model object. #}
+        <div class="mot-item"> {{ mot.masculin_singulier }} </div>
+        <div class="mot-item"> {{ mot.masculin_pluriel }} </div>
+        <a href="{% url 'mots:edit' mot.id %}">Edit</a>
+{% endfor %}
+</div>
+
+<div class="pagination">
+    <span class="step-links">
+        {% if mots.has_previous %}
+            <a href="?page=1">&laquo; first</a>
+            <a href="?page={{ contacts.previous_page_number }}">previous</a>
+        {% endif %}
+
+        <span class="current">
+            Page {{ mots.number }} of {{ mots.paginator.num_pages }}.
+        </span>
+
+        {% if mots.has_next %}
+            <a href="?page={{ mots.next_page_number }}">next</a>
+            <a href="?page={{ mots.paginator.num_pages }}">last &raquo;</a>
+        {% endif %}
+    </span>
+</div>
+
+
+{% endblock %}
+
+
+
+    

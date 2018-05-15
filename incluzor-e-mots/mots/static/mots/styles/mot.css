@@ -1,0 +1,47 @@
+
+@charset "UTF-8";
+
+.mot-list{
+	font-weight: bold;
+	grid-template-columns: repeat(3, 1fr);
+	display: grid;
+}
+
+.mot-item{
+  text-overflow: clip;
+}
+
+.form-label{
+	padding-right: 30px;
+}
+
+.card-with-padding{
+    margin:30px;
+    padding:30px;
+}
+
+.card-with-padding-only{
+    padding:30px;
+}
+
+.card{
+	margin-top: 30px;
+}
+
+.word-floater{
+    display: inline-block;
+    padding: 10px;
+    border-bottom: solid;
+    overflow: hidden;
+    background-color: white;
+    position: fixed;
+    top: 0px;
+    width: 100%;
+    z-index:3;
+}
+
+.container{
+    position:relative; 
+    top:30px;
+}
+

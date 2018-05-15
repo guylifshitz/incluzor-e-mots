@@ -1,0 +1,53 @@
+
+Mot
+    Normal fields:
+        masc sing       STRING
+        masc plur       STRING
+
+        frequency singulier     JSONB
+            google      INT
+            ngrams      INT
+
+        frequency pluriel     DICT
+            google      INT
+            ngrams      INT
+
+        other_writings LIST<FLEXION>
+
+        notes internal  LIST<STRING>
+        notes external  STRING
+
+        terminaison type    STRING
+
+    System fields
+        valid           STRING (options)
+        created_time    DATETIME auto 
+        modified_time   DATETIME auto
+        change log      LIST<STRING>
+
+
+        How to keep track of the user who made changes? keep
+
+
+FLEXION
+    singulier       STRING
+    pluriel         STRING
+
+    frequency singulier     INT
+    frequency pluriel       INT
+
+    notes externes      STRING
+    notes internes      LIST<STRING>
+
+    dictionaries found      LIST<STRING>  (options)
+
+
+    LINKS
+        url           STRING
+        comment       STRING
+
+    
+
+
+
+

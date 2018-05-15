@@ -1,0 +1,43 @@
+version: '2'
+services:
+
+
+  django:
+    container_name: dsne-django
+    build:
+      context: .
+    networks:
+      - dsne-django-nginx
+    volumes:
+      - dsne-django-static:/var/www/static/media/
+    ports:
+      - 8000:8000
+    environment:
+     - DATABASE_NAME=DB_NAME
+     - DATABASE_USER=DB_USER
+     - DATABASE_PASSWORD=PASSWORD
+     - DATABASE_HOST=HOST
+     - DATABASE_PORT=PORT
+
+  nginx:
+    container_name: dsne-nginx
+    build:
+      context: ./nginx
+      dockerfile: nginx.dockerfile
+    networks:
+      - dsne-django-nginx
+    volumes:
+      - dsne-django-static:/var/www/static/media/
+    ports:
+      - 80:80
+    depends_on:
+      - django
+
+volumes:
+  dsne-django-static:
+
+networks:
+  dsne-django-nginx:
+    driver: bridge
+
+
