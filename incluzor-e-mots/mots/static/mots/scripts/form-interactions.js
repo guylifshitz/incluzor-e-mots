@@ -77,7 +77,7 @@
 
       $.ajax({
           type: "GET",
-          url: "http://localhost:5005/mots/dict",
+          url: "http://api.incluzor.fr:5005/mots/dict",
           data: {
               dictionnaire: dict,
               mot: singulier,
