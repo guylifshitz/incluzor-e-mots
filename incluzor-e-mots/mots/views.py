@@ -3,26 +3,32 @@ from django.shortcuts import redirect
 from django.shortcuts import get_object_or_404
 
 from django.http import HttpResponse
-from .models import Mot
+from .models import Mot, FlexionFéminine
 from .forms import MotForm
-from .forms import FlexionFéminineFormSet, FéminineFormSetHelper
+from .forms import FlexionFéminineForm, FéminineFormSetHelper
 from django.views.generic import CreateView, UpdateView, DeleteView, ListView
 from django.db import transaction
 from django.urls import reverse_lazy
+from django.forms import inlineformset_factory
 
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.shortcuts import render
 from html5print import HTMLBeautifier
 
 import json
+from django.db.models.expressions import RawSQL
 
 
 def index(request):
-    contact_list = Mot.objects.filter(masculin_singulier="abyssin").order_by('id')
-    paginator = Paginator(contact_list, 100) # Show 25 contacts per page
+    # contact_list = Mot.objects.filter().order_by('id')
+    # contact_list = Mot.objects.all().order_by(RawSQL("fréquence->'ngrams'->'singulier'", ())).reverse()
+    contact_list = Mot.objects.all().order_by("terminaison", "-id").reverse()
+
+    paginator = Paginator(contact_list, 100)  # Show 25 contacts per page
 
     page = request.GET.get('page')
     mots = paginator.get_page(page)
+
     return render(request, 'mots/list.html', {'mots': mots})
 
 
@@ -36,25 +42,30 @@ def get_json_val(field, *args):
     return res
 
 
-def calculate_fréquence(form):
+def build_fréquence_json(form):
     fréquence_ngrams_singulier = form["fréquence_ngrams_singulier"].value()
     fréquence_ngrams_pluriel = form["fréquence_ngrams_pluriel"].value()
-
-    fréquence_google_singulier = form["fréquence_google_singulier"].value()
-    fréquence_google_pluriel = form["fréquence_google_pluriel"].value()
 
     fréquence = {
         "ngrams": {
             "singulier": fréquence_ngrams_singulier,
             "pluriel": fréquence_ngrams_pluriel,
         },
-        "google": {
-            "singulier": fréquence_google_singulier,
-            "pluriel": fréquence_google_pluriel,
-        }
     }
 
     return fréquence
+
+
+def build_dictionnaires_json(form):
+    dictionnaires = {
+        "larousse": form["dict_larousse"].value(),
+        "cnrtl": form["dict_cnrtl"].value(),
+        "reverso": form["dict_reverso"].value(),
+        "littré": form["dict_littré"].value(),
+        "wiktionnaire": form["dict_wiktionnaire"].value(),
+    }
+
+    return dictionnaires
 
 
 class EditMot(UpdateView):
@@ -67,6 +78,8 @@ class EditMot(UpdateView):
 
         data["word"] = self.object.masculin_singulier
 
+        FlexionFéminineFormSet = inlineformset_factory(Mot, FlexionFéminine, form=FlexionFéminineForm, extra=0, can_delete=True)
+
         if self.request.POST:
             pass
             data['flexion_fem_members'] = FlexionFéminineFormSet(self.request.POST, instance=self.object, prefix="fem")
@@ -78,10 +91,22 @@ class EditMot(UpdateView):
             for subform in data['flexion_fem_members'].forms:
                 subform.initial = subform.initial
 
-                subform.initial["fréquence_ngrams_singulier"] = get_json_val(subform.instance.fréquence, "ngrams", "singulier")
-                subform.initial["fréquence_ngrams_pluriel"] = get_json_val(subform.instance.fréquence, "ngrams", "pluriel")
-                subform.initial["fréquence_google_singulier"] = get_json_val(subform.instance.fréquence, "google", "singulier")
-                subform.initial["fréquence_google_pluriel"] = get_json_val(subform.instance.fréquence, "google", "pluriel")
+                if subform.instance.fréquence:
+                    subform.initial["fréquence_ngrams_singulier"] = get_json_val(subform.instance.fréquence, "ngrams", "singulier")
+                    subform.initial["fréquence_ngrams_pluriel"] = get_json_val(subform.instance.fréquence, "ngrams", "pluriel")
+
+                if subform.instance.liens:
+                    subform.initial["liens"] = "\n".join(subform.instance.liens)
+
+                if subform.instance.commentaires_internes:
+                    subform.initial["commentaires_internes_text"] = "\n--------\n".join(subform.instance.commentaires_internes)
+
+                if subform.instance.dictionnaires:
+                    subform.initial["dict_larousse"] = get_json_val(subform.instance.dictionnaires, "larousse")
+                    subform.initial["dict_cnrtl"] = get_json_val(subform.instance.dictionnaires, "cnrtl")
+                    subform.initial["dict_reverso"] = get_json_val(subform.instance.dictionnaires, "reverso")
+                    subform.initial["dict_littré"] = get_json_val(subform.instance.dictionnaires, "littré")
+                    subform.initial["dict_wiktionnaire"] = get_json_val(subform.instance.dictionnaires, "wiktionnaire")
 
         return data
 
@@ -89,14 +114,25 @@ class EditMot(UpdateView):
         initial = super(EditMot, self).get_initial()
 
         # Fréquence
-        initial["fréquence_ngrams_singulier"] = self.object.fréquence["ngrams"]["singulier"]
-        initial["fréquence_ngrams_pluriel"] = self.object.fréquence["ngrams"]["pluriel"]
-        initial["fréquence_google_singulier"] = self.object.fréquence["google"]["singulier"]
-        initial["fréquence_google_pluriel"] = self.object.fréquence["google"]["pluriel"]
+        if self.object.fréquence:
+            initial["fréquence_ngrams_singulier"] = get_json_val(self.object.fréquence, "ngrams", "singulier")
+            initial["fréquence_ngrams_pluriel"] = get_json_val(self.object.fréquence, "ngrams", "pluriel")
 
-        # Notes
-        if self.object.notes_internes:
-            initial["notes_internes_text"] = "\n\n".join(self.object.notes_internes)
+        # Dictionnaires
+        if self.object.dictionnaires:
+            initial["dict_larousse"] = get_json_val(self.object.dictionnaires, "larousse")
+            initial["dict_cnrtl"] = get_json_val(self.object.dictionnaires, "cnrtl")
+            initial["dict_reverso"] = get_json_val(self.object.dictionnaires, "reverso")
+            initial["dict_littré"] = get_json_val(self.object.dictionnaires, "littré")
+            initial["dict_wiktionnaire"] = get_json_val(self.object.dictionnaires, "wiktionnaire")
+
+        # Liens
+        if self.object.liens:
+            initial["liens"] = "\n".join(self.object.liens)
+
+        # Commentaires
+        if self.object.commentaires_internes:
+            initial["commentaires_internes_text"] = "\n--------\n".join(self.object.commentaires_internes)
 
         return initial
 
@@ -108,31 +144,47 @@ class EditMot(UpdateView):
     def form_valid(self, form):
         context = self.get_context_data()
 
-        new_note_interne = form["new_note_interne"].value()
+        new_commentaire_interne = form["new_commentaire_interne"].value()
 
         with transaction.atomic():
             self.object = form.save(commit=False)
 
-            # Append to notes internes list
-            if self.object.notes_internes and new_note_interne.strip() != "":
-                self.object.notes_internes.append(new_note_interne)
+            # Append to commentaires internes list
+            if self.object.commentaires_internes and new_commentaire_interne.strip() != "":
+                self.object.commentaires_internes.append(new_commentaire_interne)
             else:
-                self.object.notes_internes = [new_note_interne]
+                self.object.commentaires_internes = [new_commentaire_interne]
 
-            self.object.fréquence = calculate_fréquence(form)
+            # Sauvgarde les JSONs
+            self.object.dictionnaires = build_dictionnaires_json(form)
+            self.object.fréquence = build_fréquence_json(form)
+            self.object.liens = [lien.strip() for lien in form["liens"].value().split("\n")]
+
             self.object.save()
 
-            # Flexion Formset
+            # Sauvgarde le flexion formset
             flexion_fem_members = context["flexion_fem_members"]
 
             if flexion_fem_members.is_valid():
                 flexion_fem_members.instance = self.object
-
                 for flexi_form in flexion_fem_members:
                     flexi_obj = flexi_form.save(commit=False)
 
-                    # Fréquence : Créer le JSON
-                    flexi_obj.fréquence = calculate_fréquence(flexi_form)
+                    # Sauvgarde les JSONs
+                    flexi_obj.fréquence = build_fréquence_json(flexi_form)
+                    flexi_obj.dictionnaires = build_dictionnaires_json(flexi_form)
+
+                    # Sauvgarde les liens (par ligne)
+                    flexi_obj.liens = [lien.strip() for lien in flexi_form["liens"].value().split("\n")]
+
+                    # Append to commentaires internes list
+                    flexi_new_commentaire_interne = flexi_form["new_commentaire_interne"].value()
+                    if flexi_obj.commentaires_internes and flexi_new_commentaire_interne.strip() != "":
+                        flexi_obj.commentaires_internes.append(flexi_new_commentaire_interne)
+                    else:
+                        flexi_obj.commentaires_internes = [flexi_new_commentaire_interne]
+
+                    # Commit
                     flexi_obj.save()
             else:
                 print("Flexion invalid: ")

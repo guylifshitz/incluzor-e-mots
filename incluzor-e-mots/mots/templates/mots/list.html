@@ -5,11 +5,21 @@
 <img src="{% static 'mots/images/cat.jpg' %}" />
 <div class="mot-list">
 
+<div class="mot-item"> Masculin </div>
+<div class="mot-item">Terminaison </div>
+<div class="mot-item"> Validation du mot </div>
+<div class="mot-item"> Flexions à valider </div>
+<div class="mot-item"> Flexions total </div>
+
+
 {% for mot in mots %}
     {# Each "mot" is a Mot model object. #}
-        <div class="mot-item"> {{ mot.masculin_singulier }} </div>
-        <div class="mot-item"> {{ mot.masculin_pluriel }} </div>
-        <a href="{% url 'mots:edit' mot.id %}">Edit</a>
+        <div class="mot-item"> <a href="{% url 'mots:edit' mot.id %}">{{ mot.masculin_singulier }} </a></div>
+        <div class="mot-item"> {{ mot.terminaison }} </div>
+        <div class="mot-item"> {{ mot.validation }} </div>
+        <div class="mot-item"> {{ mot.féminine_nonvalide_count }} </div>
+        <div class="mot-item"> {{ mot.féminine_flexions_count  }} </div>
+        
 {% endfor %}
 </div>
 
@@ -17,7 +27,7 @@
     <span class="step-links">
         {% if mots.has_previous %}
             <a href="?page=1">&laquo; first</a>
-            <a href="?page={{ contacts.previous_page_number }}">previous</a>
+            <a href="?page={{ mots.previous_page_number }}">previous</a>
         {% endif %}
 
         <span class="current">

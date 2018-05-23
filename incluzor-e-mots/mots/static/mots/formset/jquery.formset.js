@@ -151,7 +151,7 @@
         console.log($$);
         console.log($$.length);
 
-        if ($$.length > -1) {
+        if ($$.length) {
             var hideAddButton = !showAddButton(),
                 addButton, template;
             if (options.formTemplate) {

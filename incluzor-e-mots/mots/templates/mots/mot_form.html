@@ -6,192 +6,30 @@
 
 {% block title %}{% endblock %}
 {% block content %}
+
+
     <div class=word-floater>
       <h3>{{word}}</h3>
     </div>
 
+
     <div class="col-md-12">
-        <form action="" method="post">{% csrf_token %}
-
-     <form method="post" action="">
-
+        <form action="" method="post">
              {% crispy form %}
              <div class="flexions" id="flexion_formset">
-             {% crispy flexion_fem_members fem_helper %}
+                {{ flexion_fem_members.management_form|crispy }}
+                {% for subform in flexion_fem_members %}
+                  {% crispy subform fem_helper %}
+                {% endfor %}
+
              </div>
-        <input class="submit" type="submit" value="Submit data">
-        
-    </form>
-
-<!-- 
-          {% regroup form by field.group as field_groups %}
-          {% for field_group in field_groups %}
-            {{field_group.grouper}}
-            <div class="list-inline" >
-            {% for field in field_group.list %}
-              {{ field.label_tag }}
-              {{field}}
-            {% endfor %}
-          </div>
-          {% endfor %}
-
- -->
-
-            <!--  <div class="form-part-mot">
-              {% for hidden_field in form.hidden_fields %}
-                  {{ hidden_field }}
-              {% endfor %}
-
-              {% if form.non_field_errors %}
-                <div class="alert alert-danger" role="alert">
-                  {% for error in form.non_field_errors %}
-                    {{ error }}
-                  {% endfor %}
-                </div>
-              {% endif %}
-
-              {% for field in form.visible_fields %}
-              <div class="form-group">
-                {{ field.label_tag }}
-
-                {% if form.is_bound %}
-                  {% if field.errors %}
-                    {% render_field field class="form-control is-invalid" %}
-                    {% for error in field.errors %}
-                      <div class="invalid-feedback">
-                        {{ error }}
-                      </div>
-                    {% endfor %}
-                  {% else %}
-                    {% render_field field class="form-control is-valid" %}
-                  {% endif %}
-                {% else %}
-                  {% render_field field class="form-control" %}
-                {% endif %}
-
-
-
-                {% if field.help_text %}
-                  <small class="form-text text-muted">{{ field.help_text }}</small>
-                {% endif %}
-              </div>
-              {% endfor %}
-            </div>
-
-            <div class="form-part-flexion">
-            <table class="table table-striped" style="max-width: 500%; width: 500%">
-                {{ flexion_masc_members.management_form }}
-
-                {% for form in flexion_masc_members.forms %}
-                    {% if forloop.first %}
-                        <thead>
-                        <tr>
-                            {% for field in form.visible_fields %}
-                                <th>{{ field.label|capfirst }}</th>
-                            {% endfor %}
-                        </tr>
-                        </thead>
-                    {% endif %}
-                    <tr class="{% cycle 'row1' 'row2' %} formset_row">
-                        {% for field in form.visible_fields %}
-                            <td>
-                                {# Include the hidden fields in the form #}
-                                {% if forloop.first %}
-                                    {% for hidden in form.hidden_fields %}
-                                        {{ hidden }}
-                                    {% endfor %}
-                                {% endif %}
-                                
-                                {% if form.is_bound %}
-                                  {% if field.errors %}
-                                    {% render_field field class="form-control is-invalid" %}
-                                    {% for error in field.errors %}
-                                      <div class="invalid-feedback">
-                                        {{ error }}
-                                      </div>
-                                    {% endfor %}
-                                  {% else %}
-                                    {% render_field field class="form-control is-valid" %}
-                                  {% endif %}
-                                {% else %}
-                                  {% render_field field class="form-control" %}
-                                {% endif %}
-
-                          {% if field.help_text %}
-                            <small class="form-text text-muted">{{ field.help_text }}</small>
-                          {% endif %}
-
-                            </td>
-                        {% endfor %}
-                    </tr>
-                {% endfor %}
-
-            </table>
-            </div>
-
-            <table class="table table-striped" style="max-width: 500%; width: 500%">
-                {{ flexion_members.management_form }}
-
-                {% for form in flexion_fem_members.forms %}
-                    {% if forloop.first %}
-                        <thead>
-                        <tr>
-                            {% for field in form.visible_fields %}
-                                <th>{{ field.label|capfirst }}</th>
-                            {% endfor %}
-                        </tr>
-                        </thead>
-                    {% endif %}
-
-                    <tr class="{% cycle 'row1' 'row2' %} formset_row">
-                        {% for field in form.visible_fields %}
-                            <td>
-                                {# Include the hidden fields in the form #}
-                                {% if forloop.first %}
-                                    {% for hidden in form.hidden_fields %}
-                                        {{ hidden }}
-                                    {% endfor %}
-                                {% endif %}
-                                
-                                {% if form.is_bound %}
-                                {% if field.errors %}
-                                  {% render_field field class="form-control is-invalid" %}
-                                  {% for error in field.errors %}
-                                    <div class="invalid-feedback">
-                                      {{ error }}
-                                    </div>
-                                  {% endfor %}
-                                {% else %}
-                                  {% render_field field class="form-control is-valid" %}
-                                {% endif %}
-                                {% else %}
-                                {% render_field field class="form-control" %}
-                                {% endif %}
-
-                          {% if field.help_text %}
-                            <small class="form-text text-muted">{{ field.help_text }}</small>
-                          {% endif %}
-
-                            </td>
-                        {% endfor %}
-                    </tr>
-                {% endfor %}
-            </table>
-           
-            <div class="form-group">
-              <button type="submit" class="btn btn-success">
-                <span class="glyphicon glyphicon-ok"></span> Save
-              </button>
-              <a href="{% url 'mots:index' %}" class="btn btn-default">Cancel</a>
-            </div>
-
-
- -->
+             <input class="submit" type="submit" value="Submit data">
         </form>
     </div>
 
     <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
     <script src="{% static 'mots/formset/jquery.formset.js' %}"></script>
+    <script src="{% static 'mots/scripts/form-interactions.js' %}"></script>
     <script type="text/javascript">
         $('.flexion_entry').formset({
             addText: 'add flexion member',
@@ -200,3 +38,6 @@
         });
     </script>
 {% endblock %}
+
+
+

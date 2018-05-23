@@ -25,7 +25,7 @@ SECRET_KEY = '4t$y7v&q^4c=dkj!vuv=4(r(3iej1xtrmt64cacu=)f%nkt3-%'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["192.168.99.100", "localhost", "guylifshitz.com"]
+ALLOWED_HOSTS = ["192.168.99.100", "localhost", "guylifshitz.com", "api.incluzor.fr"]
 
 
 # Application definition
@@ -82,7 +82,6 @@ WSGI_APPLICATION = 'incluzor_site.wsgi.application'
 
 DATABASES = {
     'default': {
-        # 'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'ENGINE': 'django_postgres_extensions.backends.postgresql',
         'NAME': os.environ.get('DATABASE_NAME', ''),
         'USER': os.environ.get('DATABASE_USER', ''),

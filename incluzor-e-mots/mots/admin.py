@@ -24,9 +24,9 @@ class MotAdmin(admin.ModelAdmin):
 
     # ]
 
-    inlines = [FlexionInline]
-    search_fields = ['masculin_singulier']
-    list_display = ('masculin_singulier', 'masculin_pluriel',  'validation_status', 'flexion_count',)
+    # inlines = [FlexionInline]
+    # search_fields = ['masculin_singulier']
+    # list_display = ('masculin_singulier', 'masculin_pluriel',  'validation_status', 'flexion_count',)
 
     def flexion_count(self, obj):
         return obj.flexion_set.count()
