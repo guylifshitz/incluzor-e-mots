@@ -108,7 +108,7 @@ class Flexion(CommonInfo):
     """
 
     # Référence vers le mot
-    mot_ref = models.ForeignKey(Mot, on_delete=models.CASCADE)
+    mot_ref = models.ForeignKey(Mot, on_delete=models.CASCADE, related_name='flexions')
 
     # singulier et pluriel du flexion
     singulier = models.CharField(max_length=100, blank=False)

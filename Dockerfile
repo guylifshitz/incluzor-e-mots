@@ -1,6 +1,12 @@
 FROM python:3.6-jessie
 
-ENV DATABASE_URL postgres://[USERNAME]:[PASSWORD]@[HOST]:[PORT]/[DBNAME]
+ENV DATABASE_URL postgres://postgres:password@guylifshitz.com:5433/incluzore_mots
+
+env DATABASE_NAME incluzore_mots
+env DATABASE_USER postgres
+env DATABASE_PASSWORD password
+env DATABASE_HOST guylifshitz.com
+env DATABASE_PORT 5433
 
 # Copy in your requirements file
 ADD requirements.txt /requirements.txt

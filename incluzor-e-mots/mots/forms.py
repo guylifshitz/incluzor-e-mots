@@ -260,9 +260,22 @@ class FlexionForm(GeneralForm):
 
 
 class FlexionFéminineForm(FlexionForm):
+    def __init__(self, *args, **kwargs):
+        super(FlexionFéminineForm, self).__init__(*args, **kwargs)
+
+        correct_arraylist(self)
+
+        self.helper = FormHelper()
+        self.helper.form_class = 'form-inline'
+        self.helper.render_required_fields = True
+
+    class Meta:
+        model = Flexion
+        exclude = ("fréquence", "commentaires_internes", "dictionnaires")
+
     class Meta:
         model = FlexionFéminine
-        exclude = ("fréquence", "commentaires_internes", "dictionnaires")
+        exclude = ("flexion_ptr", "fréquence", "commentaires_internes", "dictionnaires")
         widgets = {
             'liens': forms.Textarea(),
         }
@@ -288,6 +301,7 @@ class FéminineFormSetHelper(FormHelper):
                         Field('validation', wrapper_class="col-sm-2"),
                         Field('stratégie', wrapper_class="col-sm-2"),
                         Field('libelles', wrapper_class="col-sm-2"),
+                        UneditableField('source', readonly=True),
                     ),
                     fréquenceLayout,
                     dictionnairesLayout,

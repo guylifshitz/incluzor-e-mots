@@ -1,49 +1,34 @@
-# open file & create csvreader
 import pandas as pd
+import string
 
-# import the relevant model
 from mots.models import Mot
 from mots.models import FlexionFéminine
 
-import string
-import mots.utils as utils
 
 Mot.objects.all().delete()
 
 raw_data = pd.read_csv("../../raw-data/lexique.csv")
 raw_data = raw_data[0:]
 raw_data = raw_data.fillna("")
-# raw_data["masculin"] = raw_data["masculin"].fillna("")
-# raw_data["masculin pluriel"] = raw_data["masculin pluriel"].fillna("")
-# raw_data["commentaires"] = raw_data["commentaires"].fillna("")
 
+terminaisons = [
+              {"terminaisons": ["teur"],  "nom": "teur"},  # 3.3
+              {"terminaisons": ["eur"], "nom": "eur"},  # 3.2
+              {"terminaisons": ["a", "o", "u"], "nom": "a,o,u"},  # 2.c
+              {"terminaisons": ["i", "é"], "nom": "i,é"},  # 2.c
+              {"terminaisons": ["e"], "nom": "e"},  # 2.b
+           ]
 
-def safe_get(data, keys):
-
-    value = data
-
-    if type(keys) == list:
-        for key in keys:
-            try:
-                value = value[key]
-            except:
-                return None
-    else:
-        try:
-            value = value[keys]
-        except:
-            return None
-
-    return value
-
+voyels = ["a", "e", "i", "o", "u"]
+consonnes = [l for l in string.ascii_lowercase if l not in voyels]
+terminaisons.append({"terminaisons": consonnes, "nom": "consonne"})
 
 # for idx, row in raw_data.iloc[1000:].iterrows():
 for idx, row in raw_data.iterrows():
-    # add some custom validation\parsing for some of the fields
-
     print(idx)
     print(row["masculin"])
 
+    # Mot au masc et singulier
     masculin_sings = str(row["masculin"]).split(",")
     masculin_plurs = str(row["masculin pluriel"]).split(",")
 
@@ -53,17 +38,17 @@ for idx, row in raw_data.iterrows():
     args = {"masculin_singulier": masc_sing,
             "masculin_pluriel": masc_plur}
 
+    # Ajoute les autres formes du masculin dans une liste.
     args["masculin_sinuglier_autres"] = masculin_sings[1:]
     args["masculin_pluriel_autres"] = masculin_plurs[1:]
 
+    # Source
     args["source"] = "import_spredsheet_01"
-
+    # TODO: il faut indiqué les sources qui ont générer le mot (wiki, lefff, dicollecte).
+    #       peut-être dans la section "commentaires internes"
     # args["dictionnaires"] = [s.replace("leff", "lefff").replace("wiki", "wiktionnaire") for s in row["sources"].split(",")]
 
-    # Fréquence (default none)
-    # ngrams_ms = safe_get(utils.get_fréquence(masc_sing), "ngrams")
-    # ngrams_mp = safe_get(utils.get_fréquence(masc_plur), "ngrams")
-    # args["fréquence"] = {"ngrams":{"singulier":ngrams_ms, "pluriel":ngrams_mp}}
+    # Fréquence (default None, on va les ajouter plus tard)
     args["fréquence"] = {}
 
     # Notes
@@ -74,25 +59,13 @@ for idx, row in raw_data.iterrows():
         commentaires_internes.append(commentaires.strip())
 
     # Terminaisons
-    endings = [
-                  {"endings": ["teur"],  "name": "teur"},  # 3.3
-                  {"endings": ["eur"], "name": "eur"},  # 3.2
-                  {"endings": ["a", "o", "u"], "name": "a,o,u"},  # 2.c
-                  {"endings": ["i", "é"], "name": "i,é"},  # 2.c
-                  {"endings": ["e"], "name": "e"},  # 2.b
-               ]
-
-    consonants = list(string.ascii_lowercase)
-    consonants.remove("a"); consonants.remove("e"); consonants.remove("i"); consonants.remove("o"); consonants.remove("u")
-    endings.append({"endings": consonants, "name": "consonne"})
-
-    for ending_category in endings:
+    for term in terminaisons:
         ending_match = False
-        for ending in ending_category["endings"]:
+        for ending in term["terminaisons"]:
             if masc_sing.endswith(ending):
                 ending_match = True
         if ending_match:
-            args["terminaison"] = ending_category["name"]
+            args["terminaison"] = term["nom"]
             break
 
     # Validation
@@ -111,19 +84,31 @@ for idx, row in raw_data.iterrows():
         validation = "à traiter"
     args["validation"] = validation
 
+    # Ajouter des infos sur la création du mot dans les commentaires
     args["commentaires_internes"] = commentaires_internes
+
+    # Créer le mot
     mot = Mot(**args)
     mot.save()
 
+    # ===============
+    # Créer les flexions
+    # ===============
+    # Ajoute seulement les flexions qui étaient validé à la main par nous
+    # Les autres flexions seront ajoutés plus tard.
     if row["validation"].strip() != "":
-        # Create flexions feminines
         existing_flex_sing = []
         existing_flex_plur = []
+
+        # Trouver les flexions dans les 4 colonnes
         for i in range(1, 4):
+
+            # Trouver les flexions
             prefix = "{idx} féminin ".format(idx=i)
             singulier = row[prefix + "singulier"].lower().strip()
             pluriel = row[prefix + "pluriel"].lower().strip()
 
+            # Ajouter les commentaires
             commentaires_internes = []
 
             # Ajoute les commentaires dans toutes les flexions aussi pour
@@ -140,12 +125,10 @@ for idx, row in raw_data.iterrows():
             existing_flex_plur.append(pluriel)
 
             # Fréquence (default none)
-            # ngrams_ms = safe_get(utils.get_fréquence(singulier), "ngrams")
-            # ngrams_mp = safe_get(utils.get_fréquence(pluriel), "ngrams")
-            # flex_freq = {"ngrams":{"singulier":ngrams_ms, "pluriel":ngrams_mp}}
             flex_freq = {}
 
-            flex_args = {}
+            source = "import G-sheets"
+
             if singulier != "" and pluriel != "":
                 flex_args = {
                     "mot_ref_id": mot.id,
@@ -154,6 +137,7 @@ for idx, row in raw_data.iterrows():
                     "fréquence": flex_freq,
                     "validation": validation,
                     "commentaires_internes": commentaires_internes,
+                    "source": source,
                 }
 
                 flex = FlexionFéminine(**flex_args)

@@ -18,6 +18,29 @@ from html5print import HTMLBeautifier
 import json
 from django.db.models.expressions import RawSQL
 
+from rest_framework import viewsets
+from .serializers import MotDétailsSerializer, MotMascSerializer
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import generics
+from rest_framework import filters
+
+
+def get_all_fields_from_form(instance):
+    """"
+    Return names of all available fields from given Form instance.
+
+    :arg instance: Form instance
+    :returns list of field names
+    :rtype: list
+    """
+
+    fields = list(instance().base_fields)
+
+    for field in list(instance().declared_fields):
+        if field not in fields:
+            fields.append(field)
+    return fields
+
 
 def index(request):
     # contact_list = Mot.objects.filter().order_by('id')
@@ -43,8 +66,8 @@ def get_json_val(field, *args):
 
 
 def build_fréquence_json(form):
-    fréquence_ngrams_singulier = form["fréquence_ngrams_singulier"].value()
-    fréquence_ngrams_pluriel = form["fréquence_ngrams_pluriel"].value()
+    fréquence_ngrams_singulier = int(form["fréquence_ngrams_singulier"].value())
+    fréquence_ngrams_pluriel = int(form["fréquence_ngrams_pluriel"].value())
 
     fréquence = {
         "ngrams": {
@@ -90,7 +113,7 @@ class EditMot(UpdateView):
 
             for subform in data['flexion_fem_members'].forms:
                 subform.initial = subform.initial
-
+                print(subform.initial)
                 if subform.instance.fréquence:
                     subform.initial["fréquence_ngrams_singulier"] = get_json_val(subform.instance.fréquence, "ngrams", "singulier")
                     subform.initial["fréquence_ngrams_pluriel"] = get_json_val(subform.instance.fréquence, "ngrams", "pluriel")
@@ -168,10 +191,14 @@ class EditMot(UpdateView):
             if flexion_fem_members.is_valid():
                 flexion_fem_members.instance = self.object
                 for flexi_form in flexion_fem_members:
+                    print(get_all_fields_from_form(FlexionFéminineForm))
                     flexi_obj = flexi_form.save(commit=False)
 
                     # Sauvgarde les JSONs
                     flexi_obj.fréquence = build_fréquence_json(flexi_form)
+                    # print("fréquence", flexi_obj)#.fréquence)
+                    # print("fréquence", flexi_obj["fréquence_ngrams_singulier"])#.fréquence)
+                    # form["fréquence_ngrams_singulier"].value()
                     flexi_obj.dictionnaires = build_dictionnaires_json(flexi_form)
 
                     # Sauvgarde les liens (par ligne)
@@ -192,3 +219,22 @@ class EditMot(UpdateView):
                 return self.form_invalid(form)
 
         return super(EditMot, self).form_valid(form)
+
+
+
+class MotList(generics.ListAPIView):
+    queryset = Mot.objects.all()
+    serializer_class = MotMascSerializer
+
+    def get_queryset(self):
+        mot = self.request.query_params.get('q', None)
+        return Mot.objects.filter(masculin_singulier__startswith=mot)
+
+
+class MotDétails(generics.ListAPIView):
+    queryset = Mot.objects.all()
+    serializer_class = MotDétailsSerializer
+
+    def get_queryset(self):
+        mot = self.request.query_params.get('q', None)
+        return Mot.objects.filter(masculin_singulier=mot)

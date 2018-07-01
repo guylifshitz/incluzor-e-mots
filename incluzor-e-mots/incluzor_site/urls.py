@@ -18,9 +18,14 @@ from django.urls import path
 from django.urls import re_path
 from django.urls import include, path
 from django.conf.urls import include, url
+from mots.views import MotDétails, MotList
 
 urlpatterns = [
     re_path(r'^', include('mots.urls')),
     path('admin/', admin.site.urls),
     url(r'^mots/', include('mots.urls', namespace="mots")),
+    url(r'^api-auth/', include('rest_framework.urls')),
+    # url(r'^api/', include(router.urls)),
+    url(r'^api/mots/liste/', MotList.as_view()),
+    url(r'^api/mots/', MotDétails.as_view()),
 ]
