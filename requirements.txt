@@ -9,7 +9,7 @@ django-filter==1.1.0
 django-postgres-extensions==0.9.3
 django-taggit==0.22.2
 django-widget-tweaks==1.4.2
-djangorestframework==3.8.2
+djangorestframework==3.11.2
 html5lib==1.0.1
 html5print==0.1.2
 idna==2.6
