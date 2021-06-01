@@ -25,6 +25,6 @@ requests==2.18.4
 six==1.11.0
 slimit==0.8.1
 tinycss2==0.6.1
-urllib3==1.22
+urllib3==1.26.5
 uWSGI==2.0.17
 webencodings==0.5.1
