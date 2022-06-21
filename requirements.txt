@@ -14,7 +14,7 @@ html5lib==1.0.1
 html5print==0.1.2
 idna==2.6
 Markdown==2.6.11
-numpy==1.14.3
+numpy==1.22.0
 pandas==0.22.0
 ply==3.4
 psycopg2==2.7.4
